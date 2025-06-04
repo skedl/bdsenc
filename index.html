@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysEnc天御</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      color: #333;
+      overflow-x: hidden;
+      position: relative;
+    }
+    
+    /* 樱花花瓣飘落效果 */
+    .petal {
+      position: absolute;
+      background-color: #ffc6d3;
+      border-radius: 50% 50% 0 50%;
+      transform: rotate(-135deg);
+      pointer-events: none;
+      z-index: 0;
+      animation: fall linear infinite;
+      opacity: 0.7;
+    }
+    
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #8a3c5c;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      animation: fadeInDown 1s ease;
+      position: relative;
+      padding: 20px;
+    }
+    
+    header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="none" stroke="%23ff9aac" stroke-width="2" d="M50 15 Q65 25 65 40 Q65 55 50 65 Q35 55 35 40 Q35 25 50 15 Z" /></svg>') no-repeat center;
+      background-size: contain;
+      opacity: 0.1;
+      z-index: -1;
+    }
+    
+    header h1 {
+      font-size: 2.8rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    header h1 i {
+      color: #ff6b9c;
+      font-size: 2.5rem;
+    }
+    
+    header p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+      color: #8a3c5c;
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 10px 20px;
+      border-radius: 30px;
+      backdrop-filter: blur(5px);
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(214, 112, 147, 0.15);
+      overflow: hidden;
+      margin-bottom: 30px;
+      animation: fadeInUp 1s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 182, 193, 0.3);
+    }
+    
+    .card-header {
+      background: linear-gradient(90deg, #ffb7c5 0%, #ff9aac 100%);
+      color: #fff;
+      padding: 25px 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .card-header i {
+      font-size: 2rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .card-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .card-content {
+      padding: 40px;
+    }
+    
+    .upload-area {
+      border: 3px dashed #ff9aac;
+      border-radius: 15px;
+      padding: 50px 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 246, 248, 0.7);
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .upload-area:hover, .upload-area.dragover {
+      background: rgba(255, 230, 235, 0.8);
+      border-color: #ff6b9c;
+      transform: translateY(-5px);
+    }
+    
+    .upload-icon {
+      font-size: 4rem;
+      color: #ff6b9c;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover .upload-icon {
+      color: #ff4d87;
+      transform: scale(1.1);
+    }
+    
+    .upload-area h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #8a3c5c;
+    }
+    
+    .upload-area p {
+      color: #c97696;
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+    
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    
+    .browse-btn {
+      background: linear-gradient(90deg, #ffb7c5 0%, #ff9aac 100%);
+      color: white;
+      padding: 15px 35px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 154, 172, 0.3);
+    }
+    
+    .browse-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(255, 154, 172, 0.4);
+      background: linear-gradient(90deg, #ffa7b9 0%, #ff8ba0 100%);
+    }
+    
+    .file-info {
+      background: rgba(255, 240, 245, 0.7);
+      border-radius: 12px;
+      padding: 25px;
+      margin-top: 25px;
+      display: none;
+      animation: fadeIn 0.5s ease;
+      border: 1px solid rgba(255, 182, 193, 0.3);
+    }
+    
+    .file-info.active {
+      display: block;
+    }
+    
+    .file-info h4 {
+      font-size: 1.3rem;
+      color: #8a3c5c;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .file-details {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    
+    .file-icon {
+      flex-shrink: 0;
+      width: 80px;
+      height: 100px;
+      background: linear-gradient(135deg, #ffb7c5 0%, #ff9aac 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2.5rem;
+      box-shadow: 0 4px 10px rgba(255, 154, 172, 0.3);
+    }
+    
+    .file-meta {
+      flex-grow: 1;
+    }
+    
+    .file-meta p {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      color: #8a3c5c;
+    }
+    
+    .file-meta strong {
+      color: #ff6b9c;
+      font-weight: 600;
+    }
+    
+    .progress-container {
+      margin-top: 20px;
+    }
+    
+    .progress-bar {
+      height: 12px;
+      background: #ffe4e9;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 8px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #ffb7c5 0%, #ff6b9c 100%);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(90deg, #ffb7c5 0%, #ff9aac 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 154, 172, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(255, 154, 172, 0.4);
+      background: linear-gradient(90deg, #ffa7b9 0%, #ff8ba0 100%);
+    }
+    
+    .btn-secondary {
+      background: #fff0f5;
+      color: #ff6b9c;
+      border: 2px solid #ff9aac;
+    }
+    
+    .btn-secondary:hover {
+      background: #ffe4e9;
+      transform: translateY(-3px);
+      border-color: #ff6b9c;
+    }
+    
+    #message {
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 25px;
+      text-align: center;
+      font-size: 1.1rem;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .success {
+      background: #f0f9f0;
+      color: #2e8b57;
+      border-left: 4px solid #3cb371;
+    }
+    
+    .error {
+      background: #fef0f0;
+      color: #ff6b6b;
+      border-left: 4px solid #ff6b6b;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-top: 40px;
+      animation: fadeIn 1s ease 0.3s forwards;
+      opacity: 0;
+    }
+    
+    .feature-card {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(214, 112, 147, 0.1);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 182, 193, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 50px;
+      height: 50px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23ff9aac" d="M50 15 Q65 25 65 40 Q65 55 50 65 Q35 55 35 40 Q35 25 50 15 Z" /></svg>') no-repeat;
+      background-size: contain;
+      opacity: 0.1;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(214, 112, 147, 0.2);
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      color: #ff6b9c;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #8a3c5c;
+    }
+    
+    .feature-card p {
+      color: #c97696;
+      line-height: 1.6;
+    }
+    
+    footer {
+      color: #8a3c5c;
+      text-align: center;
+      margin-top: 50px;
+      font-size: 1rem;
+      opacity: 0.8;
+      animation: fadeIn 1s ease 0.6s forwards;
+      opacity: 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      width: 100%;
+      max-width: 800px;
+      backdrop-filter: blur(5px);
+    }
+    
+    /* 模态框样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalIn 0.5s ease;
+      border: 1px solid #ffc6d3;
+    }
+    
+    .modal-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #8a3c5c;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .modal-content p {
+      margin-bottom: 20px;
+      color: #c97696;
+    }
+    
+    .modal-content input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #ffe4e9;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+      transition: border-color 0.3s;
+      background: #fffafb;
+      color: #8a3c5c;
+    }
+    
+    .modal-content input:focus {
+      border-color: #ff9aac;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 154, 172, 0.2);
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+    }
+    
+    .modal-actions button {
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-actions button:first-child {
+      background: linear-gradient(90deg, #ffb7c5 0%, #ff9aac 100%);
+      color: white;
+    }
+    
+    .modal-actions button:last-child {
+      background: #fff0f5;
+      color: #ff6b9c;
+      border: 2px solid #ff9aac;
+    }
+    
+    .modal-actions button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* 樱花装饰元素 */
+    .sakura-decoration {
+      position: absolute;
+      z-index: 0;
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    
+    .decoration-1 {
+      top: 5%;
+      left: 5%;
+      width: 100px;
+      height: 100px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23ff9aac" d="M50 15 Q65 25 65 40 Q65 55 50 65 Q35 55 35 40 Q35 25 50 15 Z" /></svg>') no-repeat;
+    }
+    
+    .decoration-2 {
+      bottom: 10%;
+      right: 5%;
+      width: 80px;
+      height: 80px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23ff9aac" d="M50 15 Q65 25 65 40 Q65 55 50 65 Q35 55 35 40 Q35 25 50 15 Z" /></svg>') no-repeat;
+      transform: rotate(45deg);
+    }
+    
+    /* 动画 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .card-content {
+        padding: 25px;
+      }
+      
+      .file-details {
+        flex-direction: column;
+        gap: 20px;
+      }
+      
+      .actions {
+        flex-direction: column;
+      }
+      
+      header h1 {
+        font-size: 2.2rem;
+      }
+      
+      .upload-area {
+        padding: 30px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 樱花花瓣飘落效果 -->
+  <div class="sakura-decoration decoration-1"></div>
+  <div class="sakura-decoration decoration-2"></div>
+  
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-sakura"></i> 百度输入法皮肤文件加密保护</h1>
+      <p>保护您的创意作品，防止皮肤文件被未经授权的使用和修改</p>
+    </header>
+    
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-lock"></i>
+        <h2>皮肤文件加密</h2>
+      </div>
+      
+      <div class="card-content">
+        <div class="upload-area" id="dropArea">
+          <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+          <h3>上传皮肤文件</h3>
+          <p>支持 .bdi / .bds / .bda 格式文件 | 最大文件大小: 100MB</p>
+          <div class="file-input-wrapper">
+            <input type="file" id="fileInput" accept=".bdi,.bds,.bda">
+            <div class="browse-btn">
+              <i class="fas fa-folder-open"></i> 浏览文件
+            </div>
+          </div>
+        </div>
+        
+        <div class="file-info" id="fileInfo">
+          <h4><i class="fas fa-file-alt"></i> 文件信息</h4>
+          <div class="file-details">
+            <div class="file-icon">
+              <i class="fas fa-file-archive"></i>
+            </div>
+            <div class="file-meta">
+              <p><strong>文件名：</strong> <span id="fileName">example.bdi</span></p>
+              <p><strong>文件类型：</strong> <span id="fileType">BDI 皮肤文件</span></p>
+              <p><strong>文件大小：</strong> <span id="fileSize">3.45 MB</span></p>
+              <p><strong>修改时间：</strong> <span id="fileDate">2023-06-15 14:30:22</span></p>
+            </div>
+          </div>
+          
+          <div class="progress-container">
+            <p><strong>加密进度：</strong> <span id="progressText">0%</span></p>
+            <div class="progress-bar">
+              <div class="progress" id="progressBar"></div>
+            </div>
+          </div>
+          
+          <div class="actions">
+            <button class="btn btn-primary" id="encryptBtn">
+              <i class="fas fa-lock"></i> 开始加密
+            </button>
+            <button class="btn btn-secondary" id="cancelBtn">
+              <i class="fas fa-times"></i> 取消
+            </button>
+          </div>
+        </div>
+        
+        <div id="message"></div>
+      </div>
+    </div>
+    
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3>高级加密保护</h3>
+        <p>采用先进的加密技术，确保您的皮肤文件安全无虞</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <h3>快速处理</h3>
+        <p>优化处理流程，即使是大型皮肤文件也能在几秒钟内完成加密</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-mobile-alt"></i>
+        </div>
+        <h3>超高兼容性</h3>
+        <p>完美兼容百度输入法所有版本，确保加密后文件正常使用</p>
+      </div>
+    </div>
+    
+    <footer>
+      <p>&copy; 2025 Sysenc | 最低的价格提供最优质服务 | 用爱发电</p>
+    </footer>
+  </div>
+  
+  <!-- 作者信息模态框 -->
+  <div class="modal" id="authorModal">
+    <div class="modal-content">
+      <h3><i class="fas fa-user-edit"></i> 请输入作者信息</h3>
+      <p>为了保护您的版权，请提供作者信息（将写入皮肤文件）：</p>
+      <input type="text" id="authorInput" placeholder="您的姓名或机构名称">
+      <div class="modal-actions">
+        <button id="confirmAuthor">确认</button>
+        <button id="cancelAuthor">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('fileInput');
+      const dropArea = document.getElementById('dropArea');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const fileType = document.getElementById('fileType');
+      const fileSize = document.getElementById('fileSize');
+      const fileDate = document.getElementById('fileDate');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const message = document.getElementById('message');
+      const authorModal = document.getElementById('authorModal');
+      const authorInput = document.getElementById('authorInput');
+      const confirmAuthor = document.getElementById('confirmAuthor');
+      const cancelAuthor = document.getElementById('cancelAuthor');
+      
+      let currentFile = null;
+      let authorName = '未知';
+      
+      // 创建樱花花瓣
+      function createPetals() {
+        const petalsContainer = document.createElement('div');
+        petalsContainer.className = 'petals';
+        document.body.appendChild(petalsContainer);
+        
+        const petalCount = 15;
+        for (let i = 0; i < petalCount; i++) {
+          const petal = document.createElement('div');
+          petal.className = 'petal';
+          
+          // 随机大小
+          const size = Math.random() * 20 + 10;
+          petal.style.width = `${size}px`;
+          petal.style.height = `${size}px`;
+          
+          // 随机位置
+          petal.style.left = `${Math.random() * 100}vw`;
+          
+          // 随机动画时长和延迟
+          const duration = Math.random() * 10 + 5;
+          const delay = Math.random() * 5;
+          petal.style.animation = `fall ${duration}s linear ${delay}s infinite`;
+          
+          // 随机透明度
+          petal.style.opacity = Math.random() * 0.5 + 0.3;
+          
+          petalsContainer.appendChild(petal);
+        }
+      }
+      
+      // 创建花瓣
+      createPetals();
+      
+      // 文件选择处理
+      fileInput.addEventListener('change', function(e) {
+        if (this.files && this.files.length > 0) {
+          const file = this.files[0];
+          validateAndProcessFile(file);
+        }
+      });
+      
+      // 拖放功能
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropArea.classList.add('dragover');
+      }
+      
+      function unhighlight() {
+        dropArea.classList.remove('dragover');
+      }
+      
+      dropArea.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) {
+          validateAndProcessFile(file);
+        }
+      }
+      
+      // 验证并处理文件
+      function validateAndProcessFile(file) {
+        const validTypes = ['.bdi', '.bds', '.bda'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!validTypes.includes(fileExt)) {
+          showMessage('错误：请选择 .bdi, .bds 或 .bda 格式的文件', 'error');
+          return;
+        }
+        
+        if (file.size > 100 * 1024 * 1024) {
+          showMessage('错误：文件大小超过100MB限制', 'error');
+          return;
+        }
+        
+        // 保存当前文件
+        currentFile = file;
+        
+        // 更新文件信息
+        fileName.textContent = file.name;
+        
+        if (fileExt === '.bdi') {
+          fileType.textContent = 'BDI 皮肤文件';
+        } else if (fileExt === '.bds') {
+          fileType.textContent = 'BDS 皮肤文件';
+        } else {
+          fileType.textContent = 'BDA 皮肤文件';
+        }
+        
+        fileSize.textContent = formatFileSize(file.size);
+        
+        const date = new Date(file.lastModified);
+        fileDate.textContent = date.toLocaleString();
+        
+        // 显示文件信息区域
+        fileInfo.classList.add('active');
+        
+        // 重置进度
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+        message.style.display = 'none';
+        
+        // 重置按钮
+        encryptBtn.innerHTML = '<i class="fas fa-lock"></i> 开始加密';
+        encryptBtn.disabled = false;
+      }
+      
+      // 加密按钮点击
+      encryptBtn.addEventListener('click', function() {
+        if (!currentFile) {
+          showMessage('错误：请先选择皮肤文件', 'error');
+          return;
+        }
+        
+        // 显示作者输入模态框
+        authorModal.style.display = 'flex';
+        authorInput.focus();
+      });
+      
+      // 确认作者信息
+      confirmAuthor.addEventListener('click', function() {
+        authorName = authorInput.value.trim() || '未知';
+        authorModal.style.display = 'none';
+        
+        // 开始加密过程
+        startEncryption(currentFile, authorName);
+      });
+      
+      // 取消作者输入
+      cancelAuthor.addEventListener('click', function() {
+        authorModal.style.display = 'none';
+      });
+      
+      // 开始加密
+      function startEncryption(file, author) {
+        encryptBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加密中...';
+        encryptBtn.disabled = true;
+        
+        // 更新进度
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += Math.floor(Math.random() * 10) + 1;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(progressInterval);
+          }
+          progressBar.style.width = progress + '%';
+          progressText.textContent = progress + '%';
+        }, 200);
+        
+        // 实际加密处理
+        setTimeout(() => {
+          processFileEncryption(file, author);
+          clearInterval(progressInterval);
+          progressBar.style.width = '100%';
+          progressText.textContent = '100%';
+        }, 2500);
+      }
+      
+      // 文件加密处理
+      function processFileEncryption(file, author) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const arrayBuffer = e.target.result;
+          const name = file.name;
+          const ext = name.substring(name.lastIndexOf('.')).toLowerCase();
+          const baseName = name.substring(0, name.lastIndexOf('.'));
+          
+          try {
+            // 下载原始备份文件
+            const backupBlob = new Blob([arrayBuffer], { type: file.type });
+            const backupLink = document.createElement('a');
+            backupLink.href = URL.createObjectURL(backupBlob);
+            backupLink.download = baseName + '_原始备份' + ext;
+            backupLink.click();
+            
+            // 用 JSZip 添加注释后重新生成 ZIP
+            JSZip.loadAsync(arrayBuffer).then(function(zip) {
+              const now = new Date().toLocaleString();
+              const commentText = 
+                '=== 百度输入法皮肤保护声明 ===\\n' +
+                '皮肤文件: ' + name + '\\n' +
+                '作者: ' + author + '\\n' +
+                '保护时间: ' + now + '\\n' +
+                '文件类型: ' + ext.toUpperCase() + '\\n' +
+                '此皮肤受版权保护，禁止未经授权的修改和分发\\n' +
+                '非法修改和传播将面临高额赔偿\\n' +
+                '###### Copyright © 2025 ######';
+
+              zip.comment = commentText;
+
+              return zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
+            }).then(function(newArrayBuffer) {
+              const bytes = new Uint8Array(newArrayBuffer);
+
+              // 设置中央目录头和本地文件头伪加密标志
+              for (let i = 0; i < bytes.length - 4; i++) {
+                // 中央目录头签名 0x50 0x4B 0x01 0x02
+                if (bytes[i] === 0x50 && bytes[i+1] === 0x4B && bytes[i+2] === 0x01 && bytes[i+3] === 0x02) {
+                  bytes[i + 8] |= 0x01;
+                }
+                // 本地文件头签名 0x50 0x4B 0x03 0x04
+                if (bytes[i] === 0x50 && bytes[i+1] === 0x4B && bytes[i+2] === 0x03 && bytes[i+3] === 0x04) {
+                  bytes[i + 6] |= 0x01;
+                }
+              }
+
+              // 下载加密后的皮肤文件
+              const encBlob = new Blob([bytes], { type: file.type });
+              const encLink = document.createElement('a');
+              encLink.href = URL.createObjectURL(encBlob);
+              encLink.download = baseName + '_Sysenc' + ext;
+              encLink.click();
+              
+              // 显示成功消息
+              showMessage(`加密成功！作者信息 "${author}" 已写入文件。已下载加密后的皮肤文件。`, 'success');
+              
+              // 重置按钮
+              encryptBtn.innerHTML = '<i class="fas fa-lock"></i> 加密完成';
+            }).catch(error => {
+              showMessage('加密失败: ' + error.message, 'error');
+              encryptBtn.innerHTML = '<i class="fas fa-lock"></i> 开始加密';
+              encryptBtn.disabled = false;
+            });
+          } catch (error) {
+            showMessage('加密失败: ' + error.message, 'error');
+            encryptBtn.innerHTML = '<i class="fas fa-lock"></i> 开始加密';
+            encryptBtn.disabled = false;
+          }
+        };
+
+        reader.readAsArrayBuffer(file);
+      }
+      
+      // 取消按钮
+      cancelBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.remove('active');
+        message.style.display = 'none';
+        currentFile = null;
+      });
+      
+      // 文件大小格式化
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+      
+      // 显示消息
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = type;
+        message.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
