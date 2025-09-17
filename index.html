@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html>
+
+	
+	<script src="js/weiyan.js"></script>
+	<script src="js/axios.min.js"></script>
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>SakuraEnc | 为您的输入法皮肤保驾护航</title>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+		<style>
+	        * {
+	            margin: 0;
+	            padding: 0;
+	            box-sizing: border-box;
+	            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	        }
+	        
+	        body {
+            background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 30%, #ffdde1 100%);
+            color: #5d4037;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+	        
+	        /* 动态背景 */
+	        .sakura-background {
+	            position: fixed;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            z-index: -1;
+	            pointer-events: none;
+	            overflow: hidden;
+	        }
+	        
+	        .sakura-grid {
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            background: 
+	                linear-gradient(90deg, rgba(255, 138, 158, 0.05) 1px, transparent 1px),
+	                linear-gradient(0deg, rgba(255, 138, 158, 0.05) 1px, transparent 1px);
+	            background-size: 60px 60px;
+	            opacity: 0.3;
+	        }
+	        
+	        .petal {
+	            position: absolute;
+	            background: rgba(255, 214, 223, 0.8);
+	            width: 10px;
+	            height: 10px;
+	            border-radius: 150% 0 150% 0;
+	            animation: falling linear infinite;
+	            box-shadow: 0 0 10px rgba(255, 138, 158, 0.5);
+	        }
+	        
+	        @keyframes falling {
+	            0% {
+	                transform: translateY(-20%) rotate(0deg);
+	                opacity: 0;
+	            }
+	            10% {
+	                opacity: 1;
+	            }
+	            100% {
+	                transform: translateY(100vh) rotate(360deg);
+	                opacity: 0;
+	            }
+	        }
+	        
+	        .light-filter {
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            background: radial-gradient(circle at 50% 20%, rgba(255, 230, 235, 0.6), transparent 70%);
+	            pointer-events: none;
+	        }
+	        
+	        /* 布局和容器 */
+	        .container {
+	            width: 100%;
+	            max-width: 1200px;
+	            margin: 40px auto;
+	            z-index: 10;
+	            animation: fadeIn 1.2s ease-out;
+	        }
+	        
+	        /* 头部样式 */
+	        header {
+	            text-align: center;
+	            padding: 60px 30px 40px;
+	            margin-bottom: 40px;
+	            position: relative;
+	            overflow: hidden;
+	            animation: slideDown 1s ease-out;
+	        }
+	        
+	        .logo {
+	            font-size: 4.5rem;
+	            font-weight: 700;
+	            margin-bottom: 20px;
+	            background: linear-gradient(to right, #ff8a9e, #ff6b81, #ff4757);
+	            -webkit-background-clip: text;
+	            -webkit-text-fill-color: transparent;
+	            text-shadow: 0 0 30px rgba(255, 138, 158, 0.3);
+	            position: relative;
+	            display: inline-block;
+	            animation: logoPulse 4s infinite alternate;
+	        }
+	        
+	        @keyframes logoPulse {
+	            0% { text-shadow: 0 0 10px rgba(255, 138, 158, 0.3); }
+	            100% { text-shadow: 0 0 40px rgba(255, 138, 158, 0.6), 0 0 80px rgba(255, 99, 132, 0.4); }
+	        }
+	        
+	        .subtitle {
+	            font-size: 1.6rem;
+	            margin-bottom: 40px;
+	            color: #c2185b;
+	            max-width: 800px;
+	            margin: 0 auto 40px;
+	            line-height: 1.6;
+	            animation: fadeInUp 1s ease 0.3s both;
+	        }
+	        
+	        .features {
+	            display: flex;
+	            justify-content: center;
+	            flex-wrap: wrap;
+	            gap: 25px;
+	            margin-top: 40px;
+	            animation: fadeIn 1s ease 0.6s both;
+	        }
+	        
+	        .feature {
+	            background: rgba(255, 138, 158, 0.1);
+	            padding: 18px 35px;
+	            border-radius: 50px;
+	            font-size: 1.2rem;
+	            backdrop-filter: blur(10px);
+	            border: 1px solid rgba(255, 138, 158, 0.2);
+	            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	            display: flex;
+	            align-items: center;
+	            gap: 15px;
+	            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+	        }
+	        
+	        .feature:hover {
+	            transform: translateY(-8px) scale(1.05);
+	            background: rgba(255, 138, 158, 0.2);
+	            border-color: rgba(255, 138, 158, 0.5);
+	            box-shadow: 0 12px 35px rgba(255, 138, 158, 0.2);
+	        }
+	        
+	        .feature i {
+	            color: #ff8a9e;
+	            font-size: 1.8rem;
+	        }
+	        
+	        /* 卡片样式 */
+	        .card {
+	            background: rgba(255, 255, 255, 0.7);
+	            backdrop-filter: blur(15px);
+	            border-radius: 25px;
+	            padding: 50px;
+	            margin-bottom: 40px;
+	            box-shadow: 
+	                0 15px 40px rgba(233, 30, 99, 0.15),
+	                0 0 0 1px rgba(255, 183, 197, 0.3);
+	            color: #5d4037;
+	            border: 1px solid rgba(255, 183, 197, 0.2);
+	            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	            position: relative;
+	            overflow: hidden;
+	            animation: cardAppear 1s ease 0.8s both;
+	        }
+	        
+	        .card::before {
+	            content: "";
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 4px;
+	            background: linear-gradient(90deg, #ff8a9e, #ffccd5, #ff8a9e);
+	            box-shadow: 0 0 15px rgba(255, 138, 158, 0.3);
+	            animation: borderFlow 6s infinite linear;
+	        }
+	        
+	        @keyframes borderFlow {
+	            0% { background-position: 0% 50%; }
+	            100% { background-position: 200% 50%; }
+	        }
+	        
+	        .card:hover {
+	            transform: translateY(-10px);
+	            box-shadow: 
+	                0 25px 50px rgba(233, 30, 99, 0.25),
+	                0 0 0 2px rgba(255, 183, 197, 0.5);
+	        }
+	        
+	        .card-title {
+	            font-size: 2.2rem;
+	            margin-bottom: 40px;
+	            color: #c2185b;
+	            display: flex;
+	            align-items: center;
+	            gap: 20px;
+	            position: relative;
+	            padding-bottom: 20px;
+	        }
+	        
+	        .card-title::after {
+	            content: "";
+	            position: absolute;
+	            bottom: 0;
+	            left: 0;
+	            width: 200px;
+	            height: 4px;
+	            background: linear-gradient(90deg, #ff8a9e, transparent);
+	            border-radius: 3px;
+	        }
+	        
+	        .card-title i {
+	            color: #ff8a9e;
+	            font-size: 2.5rem;
+	            animation: iconPulse 2s infinite alternate;
+	        }
+	        
+	        @keyframes iconPulse {
+	            0% { transform: scale(1); }
+	            100% { transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.7)); }
+	        }
+	        
+	        /* 输入组样式 */
+	        .input-group {
+	            margin-bottom: 40px;
+	            animation: fadeIn 0.8s ease 1s both;
+	        }
+	        
+	        label {
+	            display: block;
+	            margin-bottom: 15px;
+	            font-weight: 600;
+	            color: #c2185b;
+	            font-size: 1.3rem;
+	            display: flex;
+	            align-items: center;
+	            gap: 12px;
+	        }
+	        
+	        input, textarea {
+	            width: 100%;
+	            padding: 20px 25px;
+	            background: rgba(255, 255, 255, 0.6);
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	            border-radius: 15px;
+	            font-size: 1.2rem;
+	            transition: all 0.4s;
+	            color: #5d4037;
+	            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+	        }
+	        
+	        input:focus, textarea:focus {
+	            border-color: #ff8a9e;
+	            outline: none;
+	            box-shadow: 
+	                0 0 0 4px rgba(255, 138, 158, 0.2),
+	                0 10px 30px rgba(255, 138, 158, 0.2);
+	            background: rgba(255, 255, 255, 0.8);
+	        }
+	        
+	        .file-input-container {
+	            border: 2px dashed rgba(255, 138, 158, 0.3);
+	            border-radius: 20px;
+	            padding: 50px;
+	            text-align: center;
+	            transition: all 0.5s;
+	            background: rgba(255, 255, 255, 0.6);
+	            cursor: pointer;
+	            position: relative;
+	            overflow: hidden;
+	            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+	        }
+	        
+	        .file-input-container::before {
+	            content: "";
+	            position: absolute;
+	            top: 0;
+	            left: -100%;
+	            width: 100%;
+	            height: 100%;
+	            background: linear-gradient(90deg, transparent, rgba(255, 138, 158, 0.1), transparent);
+	            transition: left 1.2s;
+	        }
+	        
+	        .file-input-container:hover::before, 
+	        .file-input-container.dragover::before {
+	            left: 100%;
+	        }
+	        
+	        .file-input-container:hover, .file-input-container.dragover {
+	            border-color: #ff8a9e;
+	            background: rgba(255, 255, 255, 0.8);
+	            transform: translateY(-5px);
+	            box-shadow: 0 15px 40px rgba(255, 138, 158, 0.2);
+	        }
+	        
+	        .file-input-container i {
+	            font-size: 4.5rem;
+	            color: #ff8a9e;
+	            margin-bottom: 30px;
+	            display: block;
+	            animation: floatIcon 3s infinite ease-in-out;
+	        }
+	        
+	        @keyframes floatIcon {
+	            0% { transform: translateY(0); }
+	            50% { transform: translateY(-15px); }
+	            100% { transform: translateY(0); }
+	        }
+	        
+	        .file-input-container p {
+	            font-size: 1.4rem;
+	            margin-bottom: 20px;
+	        }
+	        
+	        /* 按钮样式 */
+	        .btn {
+	            background: linear-gradient(135deg, #ff8a9e, #ff6b81);
+	            color: white;
+	            border: none;
+	            padding: 20px 40px;
+	            font-size: 1.4rem;
+	            border-radius: 15px;
+	            cursor: pointer;
+	            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	            display: inline-flex;
+	            align-items: center;
+	            justify-content: center;
+	            gap: 15px;
+	            font-weight: 700;
+	            box-shadow: 
+	                0 12px 30px rgba(255, 138, 158, 0.4),
+	                inset 0 4px 0 rgba(255, 255, 255, 0.3);
+	            position: relative;
+	            overflow: hidden;
+	            border: 1px solid rgba(255, 255, 255, 0.2);
+	            letter-spacing: 1px;
+	            animation: btnPulse 3s infinite alternate;
+	        }
+	        
+	        @keyframes btnPulse {
+	            0% { box-shadow: 0 12px 30px rgba(255, 138, 158, 0.4), inset 0 4px 0 rgba(255, 255, 255, 0.3); }
+	            100% { box-shadow: 0 12px 40px rgba(255, 138, 158, 0.6), inset 0 4px 0 rgba(255, 255, 255, 0.4); }
+	        }
+	        
+	        .btn::before {
+	            content: "";
+	            position: absolute;
+	            top: 0;
+	            left: -100%;
+	            width: 100%;
+	            height: 100%;
+	            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+	            transition: 0.8s;
+	        }
+	        
+	        .btn:hover::before {
+	            left: 100%;
+	        }
+	        
+	        .btn:hover {
+	            transform: translateY(-8px) scale(1.05);
+	            box-shadow: 
+	                0 18px 45px rgba(255, 138, 158, 0.6),
+	                inset 0 4px 0 rgba(255, 255, 255, 0.4);
+	        }
+	        
+	        .btn:active {
+	            transform: translateY(2px);
+	            box-shadow: 
+	                0 8px 25px rgba(255, 138, 158, 0.4),
+	                inset 0 4px 0 rgba(255, 255, 255, 0.2);
+	        }
+	        
+	        .btn:disabled {
+	            background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+	            cursor: not-allowed;
+	            transform: none;
+	            box-shadow: none;
+	            animation: none;
+	        }
+	        
+	        .btn-block {
+	            width: 100%;
+	        }
+	        
+	        .btn-alt {
+	            background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+	        }
+	        
+	        .btn-success {
+	            background: linear-gradient(135deg, #f8b195, #f67280);
+	        }
+	        
+	        /* 进度指示器 */
+	        .progress-indicator {
+	            background: rgba(255, 255, 255, 0.7);
+	            backdrop-filter: blur(15px);
+	            padding: 30px;
+	            border-radius: 20px;
+	            margin-bottom: 40px;
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+	            display: none;
+	            animation: fadeIn 0.6s ease;
+	        }
+	        
+	        .progress-header {
+	            display: flex;
+	            justify-content: space-between;
+	            margin-bottom: 20px;
+	            font-size: 1.3rem;
+	            color: #c2185b;
+	        }
+	        
+	        .progress-bar {
+	            height: 35px;
+	            background: rgba(255, 255, 255, 0.6);
+	            border-radius: 20px;
+	            overflow: hidden;
+	            position: relative;
+	            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.08);
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	        }
+	        
+	        .progress-fill {
+	            height: 100%;
+	            background: linear-gradient(90deg, #ff8a9e, #ff6b81, #ff8a9e);
+	            width: 0%;
+	            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+	            border-radius: 20px;
+	            position: relative;
+	            overflow: hidden;
+	        }
+	        
+	        .progress-fill::after {
+	            content: "";
+	            position: absolute;
+	            top: 0;
+	            left: -100%;
+	            width: 100%;
+	            height: 100%;
+	            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	            animation: progressShine 2s infinite;
+	        }
+	        
+	        @keyframes progressShine {
+	            0% { left: -100%; }
+	            100% { left: 100%; }
+	        }
+	        
+	        .progress-text {
+	            position: absolute;
+	            top: 50%;
+	            left: 50%;
+	            transform: translate(-50%, -50%);
+	            color: white;
+	            font-weight: bold;
+	            font-size: 1.3rem;
+	        }
+	        
+	        /* 结果卡片 */
+	        .result-card {
+	            display: none;
+	            animation: cardAppear 1s ease;
+	        }
+	        
+	        .result-grid {
+	            display: grid;
+	            grid-template-columns: 1fr 1fr;
+	            gap: 30px;
+	            margin: 40px 0;
+	            animation: fadeIn 0.8s ease;
+	        }
+	        
+	        .result-item {
+	            background: rgba(255, 255, 255, 0.6);
+	            padding: 30px;
+	            border-radius: 20px;
+	            text-align: center;
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+	        }
+	        
+	        .result-item:hover {
+	            transform: translateY(-10px);
+	            border-color: rgba(255, 138, 158, 0.6);
+	            box-shadow: 0 15px 45px rgba(255, 138, 158, 0.2);
+	        }
+	        
+	        .result-item i {
+	            font-size: 3.5rem;
+	            color: #ff6b81;
+	            margin-bottom: 20px;
+	        }
+	        
+	        .result-value {
+	            font-size: 1.8rem;
+	            font-weight: bold;
+	            color: #ff6b81;
+	            margin: 20px 0;
+	        }
+	        
+	        .file-info {
+	            background: rgba(255, 255, 255, 0.6);
+	            padding: 30px;
+	            border-radius: 20px;
+	            margin: 40px 0;
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+	            animation: fadeIn 1s ease;
+	        }
+	        
+	        .file-info p {
+	            margin: 15px 0;
+	            font-size: 1.2rem;
+	            display: flex;
+	        }
+	        
+	        .file-info p strong {
+	            min-width: 180px;
+	            color: #ff8a9e;
+	        }
+	        
+	        /* 法律声明预览 */
+	        .legal-title {
+	            text-align: center;
+	            font-weight: bold;
+	            margin-bottom: 30px;
+	            color: #c2185b;
+	            font-size: 1.8rem;
+	            animation: fadeIn 1s ease;
+	        }
+	        
+	        .legal-preview {
+	            background: rgba(255, 255, 255, 0.7);
+	            border: 1px solid rgba(255, 138, 158, 0.3);
+	            border-radius: 20px;
+	            padding: 30px;
+	            margin-top: 30px;
+	            max-height: 350px;
+	            overflow-y: auto;
+	            font-size: 1.1rem;
+	            line-height: 1.8;
+	            color: #5d4037;
+	            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+	            animation: fadeIn 1s ease;
+	        }
+	        
+	        .legal-preview::-webkit-scrollbar {
+	            width: 10px;
+	        }
+	        
+	        .legal-preview::-webkit-scrollbar-track {
+	            background: rgba(255, 255, 255, 0.6);
+	            border-radius: 5px;
+	        }
+	        
+	        .legal-preview::-webkit-scrollbar-thumb {
+	            background: linear-gradient(to bottom, #ff8a9e, #ff6b81);
+	            border-radius: 5px;
+	        }
+	        
+	        /* 下载按钮 */
+	        .download-buttons {
+	            display: flex;
+	            gap: 25px;
+	            margin-top: 40px;
+	            flex-wrap: wrap;
+	            animation: fadeIn 1s ease;
+	        }
+	        
+	        /* 说明区域 */
+	        .note {
+	            background: rgba(255, 138, 158, 0.15);
+	            padding: 30px;
+	            border-radius: 20px;
+	            margin-top: 40px;
+	            border-left: 5px solid #ff6b81;
+	            color: #c2185b;
+	            font-size: 1.2rem;
+	            line-height: 1.8;
+	            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+	            animation: fadeIn 1s ease;
+	        }
+	        
+	        .note p {
+	            margin: 15px 0;
+	            display: flex;
+	            align-items: center;
+	            gap: 15px;
+	        }
+	        
+	        .note i {
+	            color: #ff6b81;
+	            font-size: 1.5rem;
+	        }
+	        
+	        /* 文件列表样式 */
+	        .file-list {
+	            background: rgba(255, 255, 255, 0.6);
+	            border-radius: 15px;
+	            padding: 20px;
+	            margin-top: 15px;
+	            max-height: 300px;
+	            overflow-y: auto;
+	            border: 1px dashed rgba(255, 138, 158, 0.3);
+	        }
+	        
+	        .file-item {
+	            padding: 15px;
+	            border-bottom: 1px solid rgba(255, 138, 158, 0.1);
+	            display: flex;
+	            align-items: center;
+	            gap: 15px;
+	            transition: background 0.3s;
+	        }
+	        
+	        .file-item:hover {
+	            background: rgba(255, 240, 245, 0.7);
+	        }
+	        
+	        .file-item:last-child {
+	            border-bottom: none;
+	        }
+	        
+	        .file-icon {
+	            font-size: 1.8rem;
+	            color: #ff6b81;
+	            min-width: 40px;
+	            text-align: center;
+	        }
+	        
+	        .file-details {
+	            flex: 1;
+	        }
+	        
+	        .file-name {
+	            font-weight: 500;
+	            margin-bottom: 5px;
+	        }
+	        
+	        .file-size {
+	            font-size: 0.9rem;
+	            color: #8d6e63;
+	        }
+	        
+	        .file-extension {
+	            font-weight: bold;
+	            color: #ff6b81;
+	        }
+	        
+	        /* 文件计数 */
+	        .file-count {
+	            color: #ff6b81;
+	            font-weight: bold;
+	            margin-left: 5px;
+	        }
+	        
+	        /* 页脚 */
+	        footer {
+	            text-align: center;
+	            margin-top: 60px;
+	            padding: 40px;
+	            color: #8d6e63;
+	            font-size: 1.1rem;
+	            max-width: 800px;
+	            animation: fadeIn 1.5s ease;
+	        }
+	        
+	        /* 动画定义 */
+	        @keyframes fadeIn {
+	            from { opacity: 0; }
+	            to { opacity: 1; }
+	        }
+	        
+	        @keyframes fadeInUp {
+	            from { opacity: 0; transform: translateY(50px); }
+	            to { opacity: 1; transform: translateY(0); }
+	        }
+	        
+	        @keyframes slideDown {
+	            from { opacity: 0; transform: translateY(-50px); }
+	            to { opacity: 1; transform: translateY(0); }
+	        }
+	        
+	        @keyframes cardAppear {
+	            from { opacity: 0; transform: translateY(50px) scale(0.95); }
+	            to { opacity: 1; transform: translateY(0) scale(1); }
+	        }
+	        
+	        /* 响应式设计 */
+	        @media (max-width: 992px) {
+	            .result-grid {
+	                grid-template-columns: 1fr;
+	            }
+	            
+	            .download-buttons {
+	                flex-direction: column;
+	            }
+	            
+	            .card {
+	                padding: 30px;
+	            }
+	            
+	            .logo {
+	                font-size: 3.5rem;
+	            }
+	            
+	            .subtitle {
+	                font-size: 1.3rem;
+	            }
+	        }
+	        
+	        @media (max-width: 768px) {
+	            header {
+	                padding: 40px 20px;
+	            }
+	            
+	            .logo {
+	                font-size: 3rem;
+	            }
+	            
+	            .feature {
+	                padding: 15px 25px;
+	                font-size: 1.1rem;
+	            }
+	            
+	            .file-input-container {
+	                padding: 30px;
+	            }
+	            
+	            .card-title {
+	                font-size: 1.8rem;
+	            }
+	        }
+	    </style>
+	</head>
+	<body>
+	    <div class="sakura-background">
+	        <div class="sakura-grid"></div>
+	        <div class="light-filter"></div>
+	        <!-- 樱花花瓣将由JavaScript动态生成 -->
+	    </div>
+	    
+	    <div class="container">
+	        <header>
+	            <div class="logo">Sakura Enc</div>
+	            <div class="subtitle">山水淡雅 · 安若磐石</div>
+	            <div class="features">
+	                <div class="feature"><i class="fas fa-lock"></i> 远超同行的安全</div>
+	                <div class="feature"><i class="fas fa-gavel"></i> 一对一的打标机</div>
+	                <div class="feature"><i class="fas fa-copy"></i> 超高的兼容性</div>
+	                <div class="feature"><i class="fas fa-file-download"></i>批量加密卓越的性能</div>
+	            </div>
+	        </header>
+	        
+	        <div class="card">
+	            <div class="card-title"><i class="fas fa-file-upload"></i> 选择数字资产文件</div>
+	            
+	            <div class="input-group">
+	                <label for="creator"><i class="fas fa-user"></i> 版权所有方</label>
+	                <input type="text" id="creator" placeholder="输入版权所有方名称" value="匿名创作者">
+	            </div>
+	            
+	            <div class="input-group">
+	                <label for="counterpart"><i class="fas fa-handshake"></i> 对方信息（多个用分号 ; 分隔）</label>
+	                <input type="text" id="counterpart" placeholder="例如: 甲方公司; 乙方公司; 客户名称">
+	            </div>
+	            
+	            <div class="input-group">
+	                <label><i class="fas fa-file"></i> 选择输入法皮肤（支持任意文件类型）</label>
+	                <div class="file-input-container" id="dropZone">
+	                    <i class="fas fa-cloud-upload-alt"></i>
+	                    <p>拖放输入法皮肤到此处或 </p>
+						<p> <span class="btn">选择文件</span></p>
+	                    <input type="file" id="fileInput" multiple hidden>
+	                    <p id="fileName" style="margin-top: 30px; color: #00f2fe; font-weight: 500;">
+	                        <i class="fas fa-file"></i> 已选择 <span class="file-count" id="fileCount">0</span> 个文件
+	                    </p>
+	                </div>
+	            </div>
+	            
+	            <div class="input-group">
+	                <label>已选文件列表:</label>
+	                <div class="file-list" id="fileList">
+	                    <div class="file-item" style="justify-content: center; color: #90a4ae;">
+	                        尚未选择任何文件
+	                    </div>
+	                </div>
+	            </div>
+	            
+	            <div class="input-group">
+	                <label><i class="fas fa-file-alt"></i> 或上传包含对方信息的文本文件（每行一个）</label>
+	                <div class="action-buttons" style="display: flex; gap: 15px;">
+	                    <button class="btn btn-alt" id="uploadCounterpartBtn">上传对方信息文件</button>
+	                    <button class="btn btn-alt" id="exampleCounterpartBtn">使用示例信息</button>
+	                </div>
+	                <input type="file" id="counterpartFile" accept=".txt" hidden>
+	            </div>
+	            
+	            <button id="processBtn" class="btn btn-block">
+	                <i class="fas fa-shield-alt"></i> 开始保护处理
+	            </button>
+	        </div>
+	        
+	        <div class="progress-indicator" id="progressIndicator">
+	            <div class="progress-header">
+	                <span id="progressMessage">准备开始处理...</span>
+	                <span id="progressPercent">0%</span>
+	            </div>
+	            <div class="progress-bar">
+	                <div class="progress-fill" id="progressFill"></div>
+	                <div class="progress-text" id="progressText">0%</div>
+	            </div>
+	        </div>
+	        
+	        <div class="card result-card" id="resultCard">
+	            <div class="card-title"><i class="fas fa-check-circle"></i> 处理完成</div>
+	            
+	            <div class="file-info">
+	                <p><strong>处理摘要：</strong></p>
+	                <p><strong>版权持有方：</strong><span id="resultCreator">匿名创作者</span></p>
+	                <p><strong>对方信息数：</strong><span id="resultCounterpartCount">0</span></p>
+	                <p><strong>处理文件数：</strong><span id="processedFiles">0</span></p>
+	                <p><strong>生成保护文件：</strong><span id="protectedFiles">0</span></p>
+	                <p><strong>处理时间：</strong><span id="processTime">0</span> 秒</p>
+	            </div>
+	            
+	            <div>
+	                <div class="legal-title">数字资产法律声明</div>
+	                <div class="legal-preview" id="legalPreview">
+	                    <!-- 法律声明预览内容 -->
+	                </div>
+	            </div>
+	            
+	            <div class="download-buttons" id="downloadButtons">
+	                <!-- 下载按钮将根据处理结果动态生成 -->
+	            </div>
+	            
+	            <div class="note">
+	                <p><i class="fas fa-info-circle"></i> <strong>使用说明：</strong></p>
+	                <p><i class="fas fa-check"></i> 保护后的文件可正常在相关软件中使用</p>
+	                <p><i class="fas fa-check"></i> 任何解压尝试都将显示法律声明内容</p>
+	                <p><i class="fas fa-check"></i> 智能下载：单个文件直接下载，多个文件打包下载</p>
+	                <p><i class="fas fa-check"></i> <strong>文件后缀完全保留</strong>：处理后的文件类型与原始文件一致</p>
+	            </div>
+	        </div>
+	    </div>
+	    
+	    <footer>
+	        <p>© 2025 Project | 高级数字资产保护工具</p>
+	        <p>本工具完全在浏览器中运行，您的文件不会被上传到任何服务器</p>
+	    </footer>
+	
+	    <script>
+	        // DOM元素
+	        const fileInput = document.getElementById('fileInput');
+	        const dropZone = document.getElementById('dropZone');
+	        const fileCount = document.getElementById('fileCount');
+	        const fileList = document.getElementById('fileList');
+	        const processBtn = document.getElementById('processBtn');
+	        const progressIndicator = document.getElementById('progressIndicator');
+	        const resultCard = document.getElementById('resultCard');
+	        const progressFill = document.getElementById('progressFill');
+	        const progressText = document.getElementById('progressText');
+	        const progressPercent = document.getElementById('progressPercent');
+	        const progressMessage = document.getElementById('progressMessage');
+	        const legalPreview = document.getElementById('legalPreview');
+	        const downloadButtons = document.getElementById('downloadButtons');
+	        const uploadCounterpartBtn = document.getElementById('uploadCounterpartBtn');
+	        const exampleCounterpartBtn = document.getElementById('exampleCounterpartBtn');
+	        const counterpartFile = document.getElementById('counterpartFile');
+	        
+	        // 全局变量
+	        let selectedFiles = [];
+	        let counterparts = [];
+	        let protectedFiles = [];
+	        let startTime = null;
+	        let totalFilesToProcess = 0;
+	        let processedFiles = 0;
+	        
+	        // 生成樱花花瓣
+        function createPetals() {
+            const sakuraBackground = document.querySelector('.sakura-background');
+            const petalCount = 50; // 花瓣数量
+            
+            for (let i = 0; i < petalCount; i++) {
+                setTimeout(() => {
+                    const petal = document.createElement('div');
+                    petal.classList.add('petal');
+                    
+                    // 随机位置
+                    const left = Math.random() * 100;
+                    
+                    // 随机大小
+                    const size = 5 + Math.random() * 15;
+                    
+                    // 随机动画持续时间
+                    const duration = 5 + Math.random() * 15;
+                    
+                    // 随机动画延迟
+                    const delay = Math.random() * 10;
+                    
+                    // 随机旋转
+                    const rotation = Math.random() * 360;
+                    
+                    // 设置样式
+                    petal.style.left = `${left}%`;
+                    petal.style.width = `${size}px`;
+                    petal.style.height = `${size}px`;
+                    petal.style.opacity = `${0.5 + Math.random() * 0.5}`;
+                    petal.style.transform = `rotate(${rotation}deg)`;
+                    petal.style.animation = `falling ${duration}s linear ${delay}s infinite`;
+                    petal.style.animationTimingFunction = `cubic-bezier(${0.1 + Math.random() * 0.3}, 0, ${0.5 + Math.random() * 0.4}, 1)`;
+                    petal.style.zIndex = '1';
+                    
+                    // 添加到背景
+                    sakuraBackground.appendChild(petal);
+                    
+                    // 花瓣动画结束后移除并创建新的
+                    setTimeout(() => {
+                        if (sakuraBackground.contains(petal)) {
+                            sakuraBackground.removeChild(petal);
+                        }
+                        // 创建新花瓣
+                        setTimeout(() => {
+                            const newPetal = document.createElement('div');
+                            newPetal.classList.add('petal');
+                            newPetal.style.left = `${Math.random() * 100}%`;
+                            newPetal.style.width = `${5 + Math.random() * 15}px`;
+                            newPetal.style.height = `${5 + Math.random() * 15}px`;
+                            newPetal.style.opacity = `${0.5 + Math.random() * 0.5}`;
+                            newPetal.style.transform = `rotate(${Math.random() * 360}deg)`;
+                            newPetal.style.animation = `falling ${5 + Math.random() * 15}s linear ${Math.random() * 10}s infinite`;
+                            newPetal.style.animationTimingFunction = `cubic-bezier(${0.1 + Math.random() * 0.3}, 0, ${0.5 + Math.random() * 0.4}, 1)`;
+                            newPetal.style.zIndex = '1';
+                            sakuraBackground.appendChild(newPetal);
+                        }, 100);
+                    }, (duration + delay) * 1000);
+                }, i * 300);
+            }
+        }
+
+        // 初始化事件监听
+        function init() {
+	            // 点击拖放区域触发文件选择
+	            dropZone.addEventListener('click', () => {
+	                fileInput.click();
+	            });
+	            
+	            // 文件选择变化
+	            fileInput.addEventListener('change', handleFileSelect);
+	            
+	            // 拖放功能
+	            dropZone.addEventListener('dragover', (e) => {
+	                e.preventDefault();
+	                dropZone.classList.add('dragover');
+	            });
+	            
+	            dropZone.addEventListener('dragleave', () => {
+	                dropZone.classList.remove('dragover');
+	            });
+	            
+	            dropZone.addEventListener('drop', (e) => {
+	                e.preventDefault();
+	                dropZone.classList.remove('dragover');
+	                
+	                if (e.dataTransfer.files.length) {
+	                    handleFiles(e.dataTransfer.files);
+	                }
+	            });
+	            
+	            // 处理按钮点击
+	            processBtn.addEventListener('click', processFiles);
+	            
+	            // 上传对方信息文件
+	            uploadCounterpartBtn.addEventListener('click', () => counterpartFile.click());
+	            
+	            // 示例对方信息
+	            exampleCounterpartBtn.addEventListener('click', () => {
+	                counterparts = ["甲方公司", "乙方公司", "重要客户", "合作伙伴"];
+	                document.getElementById('counterpart').value = counterparts.join('; ');
+	                showMessage('success', '已加载示例对方信息');
+	            });
+	            
+	            counterpartFile.addEventListener('change', async (e) => {
+	                if (e.target.files.length > 0) {
+	                    const file = e.target.files[0];
+	                    try {
+	                        const text = await file.text();
+	                        // 按行分割，过滤空行
+	                        counterparts = text.split('\n')
+	                            .map(line => line.trim())
+	                            .filter(line => line.length > 0);
+	                        document.getElementById('counterpart').value = counterparts.join('; ');
+	                        showMessage('success', `成功导入 ${counterparts.length} 个对方信息`);
+	                    } catch (error) {
+	                        showMessage('error', '读取对方信息文件失败');
+	                    }
+	                }
+	            });
+	        }
+	        
+	        // 处理文件选择
+	        function handleFileSelect(e) {
+	            if (e.target.files.length) {
+	                handleFiles(e.target.files);
+	            }
+	        }
+	        
+	        // 处理文件
+	        function handleFiles(files) {
+	            // 添加所有有效文件
+	            selectedFiles = Array.from(files);
+	            updateFileList();
+	            
+	            showMessage('success', `已选择 ${files.length} 个文件`);
+	        }
+	        
+	        // 更新文件列表显示
+	        function updateFileList() {
+	            fileList.innerHTML = '';
+	            fileCount.textContent = selectedFiles.length;
+	            
+	            if (selectedFiles.length === 0) {
+	                fileList.innerHTML = '<div class="file-item" style="justify-content: center; color: #90a4ae;">尚未选择任何文件</div>';
+	                return;
+	            }
+	            
+	            selectedFiles.forEach(file => {
+	                const fileItem = document.createElement('div');
+	                fileItem.className = 'file-item';
+	                
+	                // 获取文件图标和扩展名
+	                const fileIcon = getFileIcon(file.name);
+	                const fileExtension = getFileExtension(file.name);
+	                
+	                fileItem.innerHTML = `
+	                    <div class="file-icon">${fileIcon}</div>
+	                    <div class="file-details">
+	                        <div class="file-name">${file.name}</div>
+	                        <div class="file-size">${formatBytes(file.size)} 
+	                            <span class="file-extension">${fileExtension}</span>
+	                        </div>
+	                    </div>
+	                `;
+	                fileList.appendChild(fileItem);
+	            });
+	        }
+	        
+	        // 获取文件扩展名
+	        function getFileExtension(filename) {
+	            const parts = filename.split('.');
+	            return parts.length > 1 ? `.${parts.pop()}` : '无后缀';
+	        }
+	        
+	        // 获取文件类型图标
+	        function getFileIcon(filename) {
+	            const ext = filename.split('.').pop().toLowerCase();
+	            const fileIcons = {
+	                'pdf': '📄',
+	                'doc': '📝',
+	                'docx': '📝',
+	                'xls': '📊',
+	                'xlsx': '📊',
+	                'ppt': '📽',
+	                'pptx': '📽',
+	                'jpg': '🖼',
+	                'jpeg': '🖼',
+	                'png': '🖼',
+	                'gif': '🖼',
+	                'zip': '📦',
+	                'rar': '📦',
+	                'txt': '📝',
+	                'bds': '🔒',
+	                'bda': '🔒',
+	                'bdi': '🔒',
+	                'mp3': '🎵',
+	                'mp4': '🎬',
+	                'avi': '🎬',
+	                'mov': '🎬'
+	            };
+	            
+	            return fileIcons[ext] || '📁';
+	        }
+	        
+	        // 更新进度条
+	        function updateProgress(message, percent) {
+	            progressMessage.textContent = message;
+	            progressPercent.textContent = `${percent}%`;
+	            progressText.textContent = `${percent}%`;
+	            progressFill.style.width = `${percent}%`;
+	        }
+	        
+	        // 显示进度
+	        function showProgress(message, percent) {
+	            progressIndicator.style.display = 'block';
+	            updateProgress(message, percent);
+	        }
+	        
+	        // 显示消息
+	        function showMessage(type, text) {
+	            // 移除现有消息
+	            const existingMessages = document.querySelectorAll('.message');
+	            existingMessages.forEach(msg => msg.remove());
+	            
+	            const message = document.createElement('div');
+	            message.className = `message ${type}`;
+	            message.textContent = text;
+	            message.style.cssText = `
+	                position: fixed;
+	                top: 20px;
+	                right: 20px;
+	                padding: 15px 25px;
+	                border-radius: 12px;
+	                background: ${type === 'success' ? 'rgba(46, 125, 50, 0.9)' : 'rgba(198, 40, 40, 0.9)'};
+	                color: white;
+	                font-weight: 500;
+	                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+	                z-index: 1000;
+	                animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+	                backdrop-filter: blur(5px);
+	            `;
+	            
+	            document.body.appendChild(message);
+	            
+	            setTimeout(() => {
+	                message.style.animation = 'fadeOut 0.3s forwards';
+	                setTimeout(() => message.remove(), 300);
+	            }, 2700);
+	        }
+	        
+	        // 处理文件
+	        async function processFiles() {
+	            if (selectedFiles.length === 0) {
+	                showMessage('error', '请先选择要处理的文件');
+	                return;
+	            }
+	            
+	            const creator = document.getElementById('creator').value || '匿名创作者';
+	            let counterpartText = document.getElementById('counterpart').value.trim();
+	            
+	            // 处理对方信息
+	            if (counterpartText) {
+	                counterparts = counterpartText.split(';')
+	                    .map(item => item.trim())
+	                    .filter(item => item.length > 0);
+	            } else {
+	                counterparts = [""];
+	            }
+	            
+	            if (counterparts.length === 0) {
+	                showMessage('error', '请提供至少一个对方信息');
+	                return;
+	            }
+	            
+	            // 计算总共需要处理的文件数量
+	            totalFilesToProcess = selectedFiles.length * counterparts.length;
+	            processedFiles = 0;
+	            protectedFiles = [];
+	            startTime = new Date();
+	            
+	            // 显示进度容器
+	            progressIndicator.style.display = 'block';
+	            resultCard.style.display = 'none';
+	            
+	            try {
+	                // 处理每个文件
+	                for (let i = 0; i < selectedFiles.length; i++) {
+	                    const file = selectedFiles[i];
+	                    
+	                    // 处理每个对方信息
+	                    for (let j = 0; j < counterparts.length; j++) {
+	                        const counterpart = counterparts[j];
+	                        
+	                        // 更新进度
+	                        const progress = Math.floor(processedFiles / totalFilesToProcess * 100);
+	                        const fileProgress = Math.floor((i * counterparts.length + j + 1) / totalFilesToProcess * 100);
+	                        
+	                        showProgress(
+	                            `处理文件 ${i+1}/${selectedFiles.length}`, 
+	                            fileProgress
+	                        );
+	                        
+	                        // 模拟处理延迟
+	                        await sleep(50);
+	                        
+	                        // 获取文件后缀
+	                        const extIndex = file.name.lastIndexOf('.');
+	                        const ext = extIndex > -1 ? file.name.substring(extIndex) : '';
+	                        const baseName = extIndex > -1 ? file.name.substring(0, extIndex) : file.name;
+	                        
+	                        // 创建保护后的文件名（保留原始后缀）
+	                        let protectedName;
+	                        if (counterpart) {
+	                            protectedName = `${baseName}_给_${counterpart}${ext}`;
+	                        } else {
+	                            protectedName = `${baseName}_已保护${ext}`;
+	                        }
+	                        
+	                        // 读取文件内容
+	                        const content = await readFileAsArrayBuffer(file);
+	                        
+	                        // 添加安全标识和法律声明
+	                        const protectedContent = addSecurityFlagsAndNotice(content, file.name, creator, counterpart);
+	                        
+	                        // 添加到保护文件列表
+	                        protectedFiles.push({
+	                            name: protectedName,
+	                            content: protectedContent,
+	                            size: protectedContent.byteLength,
+	                            originalName: file.name,
+	                            extension: ext
+	                        });
+	                        
+	                        processedFiles++;
+	                    }
+	                }
+	                
+	                // 处理完成
+	                updateProgress("处理完成", 100);
+	                
+	                // 显示结果
+	                setTimeout(showResults, 800);
+	                
+	            } catch (error) {
+	                showMessage('error', `处理过程中出错: ${error.message}`);
+	                console.error(error);
+	            }
+	        }
+	        
+	        // 读取文件为ArrayBuffer
+	        function readFileAsArrayBuffer(file) {
+	            return new Promise((resolve, reject) => {
+	                const reader = new FileReader();
+	                reader.onload = () => resolve(reader.result);
+	                reader.onerror = reject;
+	                reader.readAsArrayBuffer(file);
+	            });
+	        }
+	        
+	        // 添加安全标识和法律声明
+	        function addSecurityFlagsAndNotice(data, filename, creator, counterpart) {
+	            // 转换ArrayBuffer为Uint8Array以便操作
+	            const buffer = new Uint8Array(data);
+	            
+	            // 1. 更新安全标识位
+	            updateSecurityFlags(buffer);
+	            
+	            // 2. 添加法律声明
+	            const legalNotice = generateLegalNotice(creator, counterpart, filename);
+	            const encoder = new TextEncoder();
+	            const noticeBytes = encoder.encode(legalNotice);
+	            
+	            // 创建新的ArrayBuffer来包含原始数据+法律声明
+	            const newBuffer = new Uint8Array(buffer.length + noticeBytes.length);
+	            newBuffer.set(buffer, 0);
+	            newBuffer.set(noticeBytes, buffer.length);
+	            
+	            return newBuffer;
+	        }
+	        
+	        // 更新安全标识位
+	        function updateSecurityFlags(buffer) {
+	            const signature = new Uint8Array([0x50, 0x4b, 0x01, 0x02]); // '504b0102' in hex
+	            
+	            let position = 0;
+	            
+	            while (position < buffer.length - 4) {
+	                let match = true;
+	                for (let i = 0; i < 4; i++) {
+	                    if (buffer[position + i] !== signature[i]) {
+	                        match = false;
+	                        break;
+	                    }
+	                }
+	                
+	                if (match) {
+	                    // 设置第8位的标志位
+	                    buffer[position + 8] |= 1;
+	                    
+	                    // 计算偏移量
+	                    const nameLen = buffer[position + 28] | (buffer[position + 29] << 8);
+	                    const extraLen = buffer[position + 30] | (buffer[position + 31] << 8);
+	                    const commentLen = buffer[position + 32] | (buffer[position + 33] << 8);
+	                    
+	                    position += 46 + nameLen + extraLen + commentLen;
+	                } else {
+	                    position++;
+	                }
+	            }
+	            
+	            return buffer;
+	        }
+	        
+	        // 生成法律声明
+	        function generateLegalNotice(creator, counterpart, filename) {
+	            const now = new Date();
+	            const timestamp = `${now.getFullYear()}年${(now.getMonth()+1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+	            const ext = filename.substring(filename.lastIndexOf('.')).toUpperCase();
+	            
+	            const counterpartInfo = counterpart ? `▣ 对方信息: ${counterpart}\n` : '';
+	            
+	            return `\n\n【数字资产保护声明】\n` +
+	                `═══════════════════════════════════════════════════\n` +
+	                `▣ 资产名称: 《${filename}》\n` +
+	                `▣ 版权持有: ${creator}\n` +
+	                counterpartInfo +
+	                `▣ 保护生效: ${timestamp}\n` +
+	                `▣ 文件类型: ${ext}\n` +
+	                `═══════════════════════════════════════════════════\n` +
+	                `根据相关著作权法规定，本数字资产已获得法律保护。\n` +
+	                `任何未经授权的复制、修改、分发或商业使用均构成侵权行为。\n` +
+	                `═══════════════════════════════════════════════════\n` +
+	                `◎ Sakura Project | 高级键盘皮肤版权保护工具 ◎ 2025 ◎\n`;
+	        }
+	        
+	        // 显示结果
+	        function showResults() {
+	            const creator = document.getElementById('creator').value || '匿名创作者';
+	            const endTime = new Date();
+	            const processTime = ((endTime - startTime) / 1000).toFixed(2);
+	            
+	            // 更新结果信息
+	            document.getElementById('resultCreator').textContent = creator;
+	            document.getElementById('resultCounterpartCount').textContent = counterparts.length;
+	            document.getElementById('processedFiles').textContent = selectedFiles.length;
+	            document.getElementById('protectedFiles').textContent = protectedFiles.length;
+	            document.getElementById('processTime').textContent = processTime;
+	            
+	            // 显示法律声明预览
+	            const legalNotice = generateLegalNotice(creator, "", selectedFiles[0].name);
+	            legalPreview.innerHTML = legalNotice.replace(/\n/g, '<br>');
+	            
+	            // 创建下载按钮
+	            downloadButtons.innerHTML = '';
+	            
+	            // 智能下载逻辑
+	            if (protectedFiles.length === 1) {
+	                // 单个文件直接下载
+	                const file = protectedFiles[0];
+	                downloadButtons.innerHTML = `
+	                    <button id="downloadProtected" class="btn btn-success btn-block">
+	                        <i class="fas fa-download"></i> 下载保护文件 (${file.name})
+	                    </button>
+	                `;
+	                document.getElementById('downloadProtected').addEventListener('click', () => {
+	                    downloadFile(file.name, file.content);
+	                });
+	            } else {
+	                // 多个文件打包下载
+	                downloadButtons.innerHTML = `
+	                    <button id="downloadZip" class="btn btn-success btn-block">
+	                        <i class="fas fa-file-archive"></i> 下载保护文件包 (ZIP)
+	                    </button>
+	                `;
+	                document.getElementById('downloadZip').addEventListener('click', downloadZipPackage);
+	            }
+	            
+	            // 显示结果卡片
+	            resultCard.style.display = 'block';
+	            
+	            // 滚动到结果区域
+	            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	        }
+	        
+	        // 下载单个文件
+	        function downloadFile(filename, content) {
+	            const blob = new Blob([content], { type: 'application/octet-stream' });
+	            const url = URL.createObjectURL(blob);
+	            const a = document.createElement('a');
+	            
+	            a.href = url;
+	            a.download = filename;
+	            document.body.appendChild(a);
+	            a.click();
+	            
+	            setTimeout(() => {
+	                document.body.removeChild(a);
+	                URL.revokeObjectURL(url);
+	            }, 100);
+	        }
+	        
+	        // 下载压缩包
+	        async function downloadZipPackage() {
+	            const zip = new JSZip();
+	            
+	            // 添加所有保护文件到ZIP（保留原始后缀）
+	            protectedFiles.forEach(file => {
+	                zip.file(file.name, file.content);
+	            });
+	            
+	            // 生成ZIP文件
+	            const zipBlob = await zip.generateAsync({type: 'blob'});
+	            
+	            // 下载ZIP
+	            const timestamp = new Date().toLocaleString('zh-CN', {
+	                year: 'numeric',
+	                month: '2-digit',
+	                day: '2-digit',
+	                hour: '2-digit',
+	                minute: '2-digit'
+	            }).replace(/[/:\s]/g, '');
+	            
+	            saveAs(zipBlob, `数字资产保护包_${timestamp}.zip`);
+	            showMessage('success', '开始下载保护文件包');
+	        }
+	        
+	        // 辅助函数：睡眠
+	        function sleep(ms) {
+	            return new Promise(resolve => setTimeout(resolve, ms));
+	        }
+	        
+	        // 辅助函数：格式化字节大小
+	        function formatBytes(bytes, decimals = 2) {
+	            if (bytes === 0) return '0 Bytes';
+	            
+	            const k = 1024;
+	            const dm = decimals < 0 ? 0 : decimals;
+	            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+	            
+	            const i = Math.floor(Math.log(bytes) / Math.log(k));
+	            
+	            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	        }
+	        
+	        // 初始化
+	        init();
+	        // 创建樱花花瓣效果
+	        createPetals();
+	    </script>
+	</body>
+</html>
